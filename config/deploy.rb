@@ -12,6 +12,8 @@ set :repository, 'git@github.com:lsnq/zen-bem-api.git'
 set :branch, 'master'
 set :rails_env, 'production'
 set :rvm_use_path, '/etc/profile.d/rvm.sh'
+set :shared_files, fetch(:shared_files, []).push('config/database.yml', 'config/secrets.yml')
+
 # Optional settings:
 #   set :user, 'foobar'          # Username in the server to SSH to.
 #   set :port, '30000'           # SSH port number.
@@ -32,7 +34,16 @@ end
 # Put any custom commands you need to run at setup
 # All paths in `shared_dirs` and `shared_paths` will be created on their own.
 task :setup do
+  command %[mkdir -p config]
   # command %{rbenv install 2.3.0 --skip-existing}
+   # Create secrets.yml if it doesn't exist
+  path_secrets_yml = "config/secrets.yml"
+  secrets_yml = %[production:\n  secret_key_base:\n    #{`rake secret`.strip}]
+  command %[test -e #{path_secrets_yml} || echo "#{secrets_yml}" > #{path_secrets_yml}]
+
+
+   # Remove others-permission for config directory
+  command %[chmod -R o-rwx config]
 end
 
 desc "Deploys the current version to the server."
