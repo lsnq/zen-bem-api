@@ -34,16 +34,18 @@ end
 # Put any custom commands you need to run at setup
 # All paths in `shared_dirs` and `shared_paths` will be created on their own.
 task :setup do
-  command %[mkdir -p config]
-  # command %{rbenv install 2.3.0 --skip-existing}
-   # Create secrets.yml if it doesn't exist
-  path_secrets_yml = "config/secrets.yml"
-  secrets_yml = %[production:\n  secret_key_base:\n    #{`rake secret`.strip}]
-  command %[test -e #{path_secrets_yml} || echo "#{secrets_yml}" > #{path_secrets_yml}]
+  in_path(fetch(:shared_path)) do
+    command %[mkdir -p config]
+    # command %{rbenv install 2.3.0 --skip-existing}
+    # Create secrets.yml if it doesn't exist
+    path_secrets_yml = "config/secrets.yml"
+    secrets_yml = %[production:\n  secret_key_base:\n    #{`rake secret`.strip}]
+    command %[test -e #{path_secrets_yml} || echo "#{secrets_yml}" > #{path_secrets_yml}]
 
 
-   # Remove others-permission for config directory
-  command %[chmod -R o-rwx config]
+    # Remove others-permission for config directory
+    command %[chmod -R o-rwx config]
+  end
 end
 
 desc "Deploys the current version to the server."
@@ -54,6 +56,7 @@ task :deploy do
     # Put things that will set up an empty directory into a fully set-up
     # instance of your project.
     invoke :'git:clone'
+    
     invoke :'deploy:link_shared_paths'
     invoke :'bundle:install'
     invoke :'deploy:cleanup'
